@@ -1,9 +1,11 @@
 import sqlite3
+from turtle import title
 from werkzeug.exceptions import abort
-from flask import Flask, render_template
+from flask import Flask, render_template, request, url_for, flash, redirect
 
 app = Flask(__name__)
 
+app.config['SECRET_KEY'] = 'CHAVE'
 
 @app.route('/')
 def index():
@@ -18,6 +20,22 @@ def post(post_id):
     post = get_post(post_id)
     return render_template('post.html', post=post)
 
+@app.route('/create', methods=('GET', 'POST'))
+def create():
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+    
+        if not title:
+            flash('Title is required')
+        else:
+            con = get_db()
+            con.execute('INSERT INTO posts (title, content) VALUES (?, ?)',
+                         (title, content))
+            con.commit()
+            con.close()
+            return redirect(url_for('index'))
+    return render_template('create.html')
 
 def get_db():
     con = sqlite3.connect('db.sqlite3')
